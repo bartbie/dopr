@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - APP_ADDRESS=0.0.0.0:3000
+      - DATABASE_URL=postgres://todo_user:todo_password@db:5432/todo_db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - todo_network
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=todo_user
+      - POSTGRES_PASSWORD=todo_password
+      - POSTGRES_DB=todo_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - ":5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo_user -d todo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - todo_network
+
+volumes:
+  postgres_data:
+networks:
+  todo_network:
+    driver: bridge
